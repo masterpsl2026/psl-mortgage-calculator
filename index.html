@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSL Mortgage Calculator</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f6f9;margin:20px}
+.container{max-width:1200px;margin:auto;background:#fff;padding:20px;border-radius:10px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+input,select,button{padding:10px;width:100%;box-sizing:border-box}
+button{background:#0078d4;color:#fff;border:none;cursor:pointer}
+button.print{background:#28a745}
+.results{margin-top:20px}
+.table-wrap{max-height:400px;overflow:auto;border:1px solid #ddd}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ddd;padding:6px;font-size:12px}
+@media print {.noprint{display:none} body{margin:0}.table-wrap{max-height:none;overflow:visible}}
+</style>
+</head>
+<body>
+<div class='container'>
+<h2>PSL Mortgage Calculator</h2>
+<div class='grid'>
+<div><label>Purchase Price</label><input id='price' type='number' placeholder='Enter Purchase Price'></div>
+<div><label>Down Payment</label><input id='down' type='number' placeholder='Enter Down Payment'></div>
+<div><label>Interest Rate (%)</label><input id='rate' type='number' step='0.01' placeholder='Enter Interest Rate'></div>
+<div><label>Loan Term (Years)</label><input id='years' type='number' placeholder='Enter Loan Term'></div>
+<div><label>Extra Monthly Payment</label><input id='extraMonthly' type='number' placeholder='Enter Extra Monthly Payment'></div>
+<div><label>Extra Yearly Payment</label><input id='extraYearly' type='number' placeholder='Enter Extra Yearly Payment'></div>
+</div>
+
+<div class='noprint' style='margin-top:15px;display:flex;gap:10px'>
+    <button onclick='calc()'>Calculate</button>
+    <button onclick="location.reload()" style="background:#dc3545">
+    Clear All
+</button>
+    <button class='print' onclick='window.print()'>Print / Save PDF</button>
+</div>
+
+<div class='results'>
+<h3 id='summary'></h3>
+
+<div style="width:220px;height:220px;margin:20px auto;">
+    <canvas id="chart"></canvas>
+</div>
+
+<h3>Amortization Schedule</h3>
+<div class='table-wrap'><table id='sched'><thead><tr><th>#</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Extra</th><th>Balance</th></tr></thead><tbody></tbody></table></div>
+</div>
+</div>
+<script>
+let chart;
+function money(v){return '$'+v.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+function calc(){
+const price=+priceEl.value, down=+downEl.value, rate=+rateEl.value/100/12, years=+yearsEl.value;
+const extraM=+extraMonthly.value, extraY=+extraYearly.value;
+let balance=price-down;
+const origBalance=balance;
+const n=years*12;
+const pmt=balance*(rate*Math.pow(1+rate,n))/(Math.pow(1+rate,n)-1);
+let totalInterest=0, month=0;
+let tbody=document.querySelector('#sched tbody'); tbody.innerHTML='';
+while(balance>0.01 && month<1000){
+month++;
+let interest=balance*rate;
+let principal=pmt-interest;
+let extra=extraM;
+if(month%12===1) extra+=extraY;
+if(principal+extra>balance){extra=Math.max(0,balance-principal);}
+balance-=principal+extra;
+if(balance<0) balance=0;
+totalInterest+=interest;
+let row=`<tr><td>${month}</td><td>${money(pmt)}</td><td>${money(principal)}</td><td>${money(interest)}</td><td>${money(extra)}</td><td>${money(balance)}</td></tr>`;
+tbody.insertAdjacentHTML('beforeend',row);
+}
+summary.innerHTML=`Monthly Payment: ${money(pmt)} | Payoff Months: ${month} | Total Interest: ${money(totalInterest)}`;
+const principalPaid=origBalance;
+if(chart) chart.destroy();
+chart=new Chart(document.getElementById('chart'),{type:'doughnut',data:{labels:['Principal','Interest'],datasets:[{data:[principalPaid,totalInterest]}]}});
+}
+const priceEl=document.getElementById('price'); const downEl=document.getElementById('down'); const rateEl=document.getElementById('rate'); const yearsEl=document.getElementById('years');
+calc();
+</script>
+</body></html>
