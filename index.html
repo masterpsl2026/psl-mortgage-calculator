@@ -16,7 +16,13 @@ button.print{background:#28a745}
 .table-wrap{max-height:400px;overflow:auto;border:1px solid #ddd}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #ddd;padding:6px;font-size:12px}
-@media print {.noprint{display:none} body{margin:0}.table-wrap{max-height:none;overflow:visible}}
+
+@media print {
+  .noprint{display:none !important} 
+  body{margin:0; background: #fff;}
+  .container{max-width:none; padding: 0; box-shadow: none;}
+  .table-wrap{max-height:none; overflow:visible}
+}
 </style>
 </head>
 <body>
@@ -31,56 +37,121 @@ th,td{border:1px solid #ddd;padding:6px;font-size:12px}
 <div><label>Extra Yearly Payment</label><input id='extraYearly' type='number' placeholder='Enter Extra Yearly Payment'></div>
 </div>
 
+<div style="margin-top:12px;">
+    <label>Monthly Impounds Fee</label>
+    <input id="impounds" type="number" placeholder="Enter Monthly Impounds">
+</div>
+
 <div class='noprint' style='margin-top:15px;display:flex;gap:10px'>
     <button onclick='calc()'>Calculate</button>
-    <button onclick="location.reload()" style="background:#dc3545">
-    Clear All
-</button>
+    <button onclick="location.reload()" style="background:#dc3545">Clear All</button>
     <button class='print' onclick='window.print()'>Print / Save PDF</button>
 </div>
 
 <div class='results'>
-<h3 id='summary'></h3>
-
-<div style="width:220px;height:220px;margin:20px auto;">
+<h3 id='summary' style="line-height: 1.6;"></h3>
+<div style="width:220px;height:220px;margin:20px auto;" class="noprint">
     <canvas id="chart"></canvas>
 </div>
-
 <h3>Amortization Schedule</h3>
-<div class='table-wrap'><table id='sched'><thead><tr><th>#</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Extra</th><th>Balance</th></tr></thead><tbody></tbody></table></div>
+<div class='table-wrap'>
+  <table id='sched'>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Loan P&I</th>
+        <th>Impounds</th>
+        <th>Total Payment</th>
+        <th>Principal</th>
+        <th>Interest</th>
+        <th>Extra</th>
+        <th>Balance</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </div>
 </div>
+</div>
+
 <script>
 let chart;
 function money(v){return '$'+v.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+
 function calc(){
-const price=+priceEl.value, down=+downEl.value, rate=+rateEl.value/100/12, years=+yearsEl.value;
-const extraM=+extraMonthly.value, extraY=+extraYearly.value;
-let balance=price-down;
-const origBalance=balance;
-const n=years*12;
-const pmt=balance*(rate*Math.pow(1+rate,n))/(Math.pow(1+rate,n)-1);
-let totalInterest=0, month=0;
-let tbody=document.querySelector('#sched tbody'); tbody.innerHTML='';
-while(balance>0.01 && month<1000){
-month++;
-let interest=balance*rate;
-let principal=pmt-interest;
-let extra=extraM;
-if(month%12===1) extra+=extraY;
-if(principal+extra>balance){extra=Math.max(0,balance-principal);}
-balance-=principal+extra;
-if(balance<0) balance=0;
-totalInterest+=interest;
-let row=`<tr><td>${month}</td><td>${money(pmt)}</td><td>${money(principal)}</td><td>${money(interest)}</td><td>${money(extra)}</td><td>${money(balance)}</td></tr>`;
-tbody.insertAdjacentHTML('beforeend',row);
+  const price = +priceEl.value || 0;
+  const down = +downEl.value || 0;
+  const rate = (+rateEl.value || 0) / 100 / 12;
+  const years = +yearsEl.value || 0;
+  const extraM = +extraMonthlyEl.value || 0;
+  const extraY = +extraYearlyEl.value || 0;
+  const impounds = +impoundsEl.value || 0;
+
+  let balance = price - down;
+  const origBalance = balance;
+  const n = years * 12;
+  
+  if (n <= 0 || rate <= 0 || balance <= 0) {
+    summaryEl.innerHTML = "Please enter valid loan details.";
+    return;
+  }
+
+  const pmt = balance * (rate * Math.pow(1 + rate, n)) / (Math.pow(1 + rate, n) - 1);
+  const totalMonthlyPayment = pmt + impounds;
+  const totalImpoundsLife = impounds * n;
+
+  let totalInterest = 0, month = 0;
+  let tbody = document.querySelector('#sched tbody'); 
+  tbody.innerHTML = '';
+
+  while(balance > 0.01 && month < 1000){
+    month++;
+    let interest = balance * rate;
+    let principal = pmt - interest;
+    let extra = extraM;
+    if(month % 12 === 1) extra += extraY;
+    if(principal + extra > balance){ extra = Math.max(0, balance - principal); }
+    balance -= principal + extra;
+    if(balance < 0) balance = 0;
+    totalInterest += interest;
+    
+    let rowMonthlyTotal = pmt + impounds;
+    let row = `<tr>
+      <td>${month}</td>
+      <td>${money(pmt)}</td>
+      <td>${money(impounds)}</td>
+      <td><b>${money(rowMonthlyTotal)}</b></td>
+      <td>${money(principal)}</td>
+      <td>${money(interest)}</td>
+      <td>${money(extra)}</td>
+      <td>${money(balance)}</td>
+    `;
+    tbody.insertAdjacentHTML('beforeend', row);
+  }
+
+  summaryEl.innerHTML = `Principal & Interest: ${money(pmt)}<br>Monthly Impounds: ${money(impounds)} (Total over ${n} mos: ${money(totalImpoundsLife)})<br><b>Total Monthly Payment: ${money(totalMonthlyPayment)}</b><br>Payoff Months: ${month} | Total Interest: ${money(totalInterest)}`;
+  
+  const principalPaid = origBalance;
+  if(chart) chart.destroy();
+  chart = new Chart(document.getElementById('chart'),{
+    type:'doughnut',
+    data:{
+      labels:['Principal','Interest'],
+      datasets:[{data:[principalPaid,totalInterest]}]
+    }
+  });
 }
-summary.innerHTML=`Monthly Payment: ${money(pmt)} | Payoff Months: ${month} | Total Interest: ${money(totalInterest)}`;
-const principalPaid=origBalance;
-if(chart) chart.destroy();
-chart=new Chart(document.getElementById('chart'),{type:'doughnut',data:{labels:['Principal','Interest'],datasets:[{data:[principalPaid,totalInterest]}]}});
-}
-const priceEl=document.getElementById('price'); const downEl=document.getElementById('down'); const rateEl=document.getElementById('rate'); const yearsEl=document.getElementById('years');
+
+const priceEl = document.getElementById('price'); 
+const downEl = document.getElementById('down'); 
+const rateEl = document.getElementById('rate'); 
+const yearsEl = document.getElementById('years');
+const extraMonthlyEl = document.getElementById('extraMonthly');
+const extraYearlyEl = document.getElementById('extraYearly');
+const impoundsEl = document.getElementById('impounds');
+const summaryEl = document.getElementById('summary');
+
 calc();
 </script>
-</body></html>
+</body>
+</html>
