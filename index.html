@@ -39,7 +39,7 @@ th,td{border:1px solid #ddd;padding:6px;font-size:12px}
 
 <div style="margin-top:12px;">
     <label>Monthly Impounds Fee</label>
-    <input id="impounds" type="number" placeholder="Enter Monthly Impounds">
+    <input id="impounds" type="number" placeholder="Enter Monthly Impounds" value="9">
 </div>
 
 <div class='noprint' style='margin-top:15px;display:flex;gap:10px'>
@@ -93,6 +93,8 @@ function calc(){
   
   if (n <= 0 || rate <= 0 || balance <= 0) {
     summaryEl.innerHTML = "Please enter valid loan details.";
+    let tbody = document.querySelector('#sched tbody'); 
+    tbody.innerHTML = '';
     return;
   }
 
@@ -150,8 +152,6 @@ const extraMonthlyEl = document.getElementById('extraMonthly');
 const extraYearlyEl = document.getElementById('extraYearly');
 const impoundsEl = document.getElementById('impounds');
 const summaryEl = document.getElementById('summary');
-
-calc();
 </script>
 </body>
 </html>
