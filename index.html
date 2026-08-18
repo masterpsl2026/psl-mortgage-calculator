@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PSL Land Payment Plan Calculator</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f6f9;margin:20px;font-size:15px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 .container{max-width:1200px;margin:auto;background:#fff;padding:24px 28px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.08);border-top:6px solid #0078d4;}
@@ -16,12 +15,56 @@ label{font-size:14px;font-weight:600;color:#333;}
 button{background:#0078d4;color:#fff;border:none;cursor:pointer;font-size:15px;font-weight:600;border-radius:5px;padding:12px;}
 button.print{background:#28a745}
 .results{margin-top:20px}
-#summary{font-size:17px;line-height:1.8;}
-.total-highlight{display:inline-block;background:#eaf4ff;color:#0078d4;padding:8px 14px;border-radius:6px;font-size:19px;margin-top:6px;}
+#summary{font-size:14.5px;}
+.sum-header{margin-bottom:14px;}
+.sum-tract{font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:3px;}
+.sum-meta{color:#697386;font-size:13px;line-height:1.5;}
+.sum-block{margin-bottom:4px;}
+.sum-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:6px 0;border-bottom:1px solid #f0f2f5;}
+.sum-row:last-child{border-bottom:none;}
+.sum-label{color:#697386;font-weight:500;}
+.sum-value{font-weight:600;color:#1a1a1a;text-align:right;white-space:nowrap;}
+.sum-divider{border:none;border-top:1px solid #e3e9f0;margin:14px 0;}
+.total-highlight{display:flex;justify-content:space-between;align-items:center;background:#eaf4ff;color:#0078d4;padding:14px 16px;border-radius:8px;font-size:16px;margin:14px 0;border:1px solid #cfe6fb;}
+.total-highlight span:first-child{font-weight:600;font-size:14px;color:#0078d4;}
+.total-highlight span:last-child{font-size:20px;font-weight:700;}
+.sum-footer{text-align:center;color:#5b6472;font-size:12.5px;margin-top:4px;}
+.sum-subtotal{display:flex;justify-content:space-between;align-items:baseline;padding-top:10px;margin-top:2px;border-top:2px solid #e3e9f0;}
+.sum-subtotal .sum-label{color:#333;font-weight:700;}
+.sum-subtotal .sum-value{color:#333;font-weight:700;}
+.sum-row.is-subtotal{border-top:1px solid #dfe3e8;margin-top:2px;padding-top:10px;padding-left:14px;}
+.sum-row.is-subtotal .sum-label{color:#333;font-weight:700;}
+.sum-row.is-subtotal .sum-value{font-weight:700;}
+.sum-subheader{color:#0078d4;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+.sum-sublabel{font-size:11px;color:#5b6472;font-weight:400;text-transform:none;letter-spacing:0;}
+.sum-note{margin-top:12px;font-size:12px;color:#4f5866;line-height:1.5;font-style:italic;}
+.chart-caption{color:#5b6472;font-size:13px;margin-bottom:14px;line-height:1.6;}
+.chart-caption b{color:#333;font-weight:600;}
+.breakdown-card{background:#f9fafb;border:1px solid #eef0f3;border-radius:10px;padding:20px 22px;min-width:230px;}
+.payment-bar{display:flex;width:100%;height:26px;border-radius:13px;overflow:hidden;background:#e9ecf1;}
+.payment-bar-seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:11.5px;font-weight:700;white-space:nowrap;letter-spacing:0.2px;}
+.payment-bar-seg.principal{background:#0078d4;}
+.payment-bar-seg.interest{background:#eb6834;margin-left:2px;}
+.payment-bar-seg.service{background:#1baf7a;margin-left:2px;}
+.payment-legend{margin-top:16px;text-align:left;}
+.payment-legend-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:6px 0;border-bottom:1px solid #eef0f3;font-size:13px;}
+.payment-legend-row:last-child{border-bottom:none;}
+.payment-legend-left{display:flex;align-items:center;gap:8px;color:#43494f;font-weight:500;}
+.payment-legend-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;}
+.payment-legend-dot.principal{background:#0078d4;}
+.payment-legend-dot.interest{background:#eb6834;}
+.payment-legend-dot.service{background:#1baf7a;}
+.payment-legend-value{font-weight:700;color:#1a1a1a;white-space:nowrap;}
 .table-wrap{max-height:400px;overflow:auto;border:1px solid #ddd}
 table{width:100%;border-collapse:collapse}
 th,td{border:1px solid #ddd;padding:8px;font-size:13px}
 th{background:#f0f5fb;color:#0078d4;}
+.compare-table th{text-align:center;}
+.compare-table td{text-align:center;}
+.compare-table td:first-child, .compare-table th:first-child{text-align:left;font-weight:600;}
+.compare-table .rate-label{font-weight:700;color:#0078d4;}
+.compare-table .rate-sub{font-weight:400;font-size:11px;color:#5b6472;display:block;}
+.compare-table .best-cell{background:#eaf4ff;font-weight:700;color:#0078d4;}
 
 @media print {
   @page { size: letter; margin: 0.5in; }
@@ -32,9 +75,11 @@ th{background:#f0f5fb;color:#0078d4;}
   #schedSection{page-break-before: always;}
   h2{margin:0 0 10px 0; font-size:22px;}
   h3{margin:8px 0 6px 0; font-size:16px;}
-  #summary{font-size:14.5px; line-height:1.5;}
-  .total-highlight{font-size:16px;}
-  #chartWrap{width:170px !important; height:170px !important; margin:8px auto !important;}
+  #summary{font-size:13px;}
+  .sum-row{padding:3px 0;}
+  .total-highlight{font-size:14px; padding:8px 12px;}
+  .total-highlight span:last-child{font-size:16px;}
+  .breakdown-card{padding:12px 14px;}
 }
 </style>
 </head>
@@ -46,8 +91,8 @@ th{background:#f0f5fb;color:#0078d4;}
 <div class='grid noprint'>
 <div><label>Tract Name</label><input id='tractName' type='text' placeholder='e.g. Aqueduct City Tract'></div>
 <div><label>County</label><input id='county' type='text' placeholder='Enter County'></div>
-<div><label>Lots</label><input id='lots' type='text' placeholder='e.g. 31-39'></div>
 <div><label>Block</label><input id='block' type='text' placeholder='e.g. 6'></div>
+<div><label>Lots</label><input id='lots' type='text' placeholder='e.g. 31-39'></div>
 </div>
 
 <h3 class='noprint'>Loan Details</h3>
@@ -61,8 +106,8 @@ th{background:#f0f5fb;color:#0078d4;}
 </div>
 
 <div class='noprint' style="margin-top:12px;">
-    <label>Monthly Impounds Fee</label>
-    <input id="impounds" type="number" placeholder="Enter Monthly Impounds" value="9">
+    <label>Monthly Service Charge</label>
+    <input id="impounds" type="number" placeholder="Enter Monthly Service Charge" value="9">
 </div>
 
 <div class='noprint' style='margin-top:15px;display:flex;gap:10px'>
@@ -75,12 +120,15 @@ th{background:#f0f5fb;color:#0078d4;}
 <div style="display:flex; gap:30px; flex-wrap:wrap; align-items:flex-start;">
   <div style="flex:1 1 300px; max-width:420px;">
     <h3>Loan Summary</h3>
-    <h3 id='summary' style="line-height: 1.6; font-weight:normal;"></h3>
+    <div id='summary'></div>
   </div>
-  <div style="flex:0 0 auto; text-align:center;">
+  <div style="flex:1 1 270px; max-width:320px; text-align:center;">
     <h3>Payment Breakdown</h3>
-    <div id='chartWrap' style="width:200px;height:200px;margin:10px auto;">
-        <canvas id="chart"></canvas>
+    <div class="breakdown-card">
+      <div id='chartMeta' class='chart-caption'></div>
+      <div id="paymentBar" class="payment-bar"></div>
+      <div id="paymentLegend" class="payment-legend"></div>
+      <div id="paymentNote" class="sum-note" style="text-align:left;"></div>
     </div>
   </div>
 </div>
@@ -97,7 +145,7 @@ th{background:#f0f5fb;color:#0078d4;}
       <tr>
         <th>#</th>
         <th>Loan P&amp;I</th>
-        <th>Impounds</th>
+        <th>Service Charge</th>
         <th>Total Payment</th>
         <th>Principal</th>
         <th>Interest</th>
@@ -113,9 +161,8 @@ th{background:#f0f5fb;color:#0078d4;}
 </div>
 
 <script>
-let chart;
 function money(v){return '$'+v.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
-
+function pct(v){return Math.round(v*100)+'%';}
 function toggleSchedule(){
   const section = document.getElementById('schedSection');
   const btn = document.getElementById('toggleSched');
@@ -152,8 +199,6 @@ function calc(){
   }
 
   const pmt = balance * (rate * Math.pow(1 + rate, n)) / (Math.pow(1 + rate, n) - 1);
-  const totalMonthlyPayment = pmt + impounds;
-  const totalImpoundsLife = impounds * n;
 
   let totalInterest = 0, month = 0;
   let tbody = document.querySelector('#sched tbody');
@@ -185,41 +230,73 @@ function calc(){
   }
 
   const amountFinanced = origBalance;
-  const totalFinanceCharge = totalInterest + totalImpoundsLife;
-  const deferredPaymentPrice = price + totalFinanceCharge;
+  const totalServiceCharge = impounds * n;
+  const financeCharge = totalInterest + totalServiceCharge;
+  const totalOfPayments = financeCharge + amountFinanced;
+  const deferredPaymentPrice = price + financeCharge;
+  const totalEstMonthlyPayment = pmt + impounds;
 
-  summaryEl.innerHTML = `${tractName ? tractName : 'Tract'}<br>
-Lots: ${lots} | Block: ${block} | County: ${county}<br>
-Date: ${dateStamp}<br><br>
-Purchase Price: ${money(price)}<br>
-Down Payment: ${money(down)}<br>
-Interest Rate: ${ratePct}%<br>
-Amount Financed: ${money(amountFinanced)}<br>
-Loan Term: ${n / 12} years<br>
-Principal & Interest: ${money(pmt)}<br>
-<b>Total Interest: ${money(totalInterest)}</b><br>
-Monthly Impounds: ${money(impounds)}<br>
-<b>Total Impound: ${money(totalImpoundsLife)}</b><br>
-<b>Total Finance Charge: ${money(totalFinanceCharge)}</b><br>
-Deferred Payment Price: ${money(deferredPaymentPrice)}<br>
-<div class="total-highlight"><b>Total Monthly Payment: ${money(totalMonthlyPayment)}</b></div><br>
-Payoff Months: ${month}`;
+  summaryEl.innerHTML = `
+<div class="sum-header">
+  <div class="sum-tract">Tract ${tractName || '—'}</div>
+  <div class="sum-meta">Block: ${block || '—'} &nbsp;|&nbsp; Lots: ${lots || '—'} &nbsp;|&nbsp; County: ${county || '—'}</div>
+  <div class="sum-meta">Date: ${dateStamp}</div>
+</div>
+
+<div class="sum-block">
+  <div class="sum-row"><span class="sum-label">Purchase Price</span><span class="sum-value">${money(price)}</span></div>
+  <div class="sum-row"><span class="sum-label">Down Payment</span><span class="sum-value">${money(down)}</span></div>
+  <div class="sum-row"><span class="sum-label">Amount Financed <span class="sum-sublabel">(unpaid balance)</span></span><span class="sum-value">${money(amountFinanced)}</span></div>
+</div>
+
+<hr class="sum-divider">
+
+<div class="sum-block">
+  <div class="sum-subheader">Finance Charge</div>
+  <div class="sum-row"><span class="sum-label">Interest</span><span class="sum-value">${money(totalInterest)}</span></div>
+  <div class="sum-row"><span class="sum-label">Service Charge</span><span class="sum-value">${money(totalServiceCharge)}</span></div>
+  <div class="sum-row is-subtotal"><span class="sum-label">Subtotal</span><span class="sum-value">${money(financeCharge)}</span></div>
+  <div class="sum-row"><span class="sum-label">Total of Payments</span><span class="sum-value">${money(totalOfPayments)}</span></div>
+  <div class="sum-row"><span class="sum-label">Deferred Payment Price</span><span class="sum-value">${money(deferredPaymentPrice)}</span></div>
+</div>
+
+<hr class="sum-divider">
+
+<div class="sum-block">
+  <div class="sum-row"><span class="sum-label">Monthly Payment (P&amp;I)</span><span class="sum-value">${money(pmt)}</span></div>
+  <div class="sum-row"><span class="sum-label">Service Monthly Charge</span><span class="sum-value">${money(impounds)}</span></div>
+</div>
+
+<div class="total-highlight"><span>Total Estimated Monthly Payment</span><span>${money(totalEstMonthlyPayment)}</span></div>`;
+
+  chartMetaEl.innerHTML = `<b>${ratePct}%</b> interest &nbsp;·&nbsp; <b>${n / 12}</b>-year term<br><b>${month}</b> payments`;
 
   const principalPaid = origBalance;
-  if(chart) chart.destroy();
-  chart = new Chart(document.getElementById('chart'),{
-    type:'doughnut',
-    data:{
-      labels:['Principal','Interest'],
-      datasets:[{
-        data:[principalPaid,totalInterest],
-        backgroundColor:['#0078d4','#dc3545']
-      }]
-    },
-    options:{
-      plugins:{ legend:{ position:'bottom' } }
-    }
-  });
+  const totalPaid = principalPaid + totalInterest + totalServiceCharge;
+  const principalShare = totalPaid > 0 ? principalPaid / totalPaid : 0;
+  const interestShare = totalPaid > 0 ? totalInterest / totalPaid : 0;
+  const serviceShare = totalPaid > 0 ? totalServiceCharge / totalPaid : 0;
+
+  paymentBarEl.innerHTML = `
+<div class="payment-bar-seg principal" style="width:${principalShare * 100}%">${principalShare >= 0.08 ? pct(principalShare) : ''}</div>
+<div class="payment-bar-seg interest" style="width:${interestShare * 100}%">${interestShare >= 0.08 ? pct(interestShare) : ''}</div>
+<div class="payment-bar-seg service" style="width:${serviceShare * 100}%">${serviceShare >= 0.08 ? pct(serviceShare) : ''}</div>`;
+
+  paymentLegendEl.innerHTML = `
+<div class="payment-legend-row">
+  <span class="payment-legend-left"><span class="payment-legend-dot principal"></span>Principal</span>
+  <span class="payment-legend-value">${money(principalPaid)}</span>
+</div>
+<div class="payment-legend-row">
+  <span class="payment-legend-left"><span class="payment-legend-dot interest"></span>Interest</span>
+  <span class="payment-legend-value">${money(totalInterest)}</span>
+</div>
+<div class="payment-legend-row">
+  <span class="payment-legend-left"><span class="payment-legend-dot service"></span>Service Charge</span>
+  <span class="payment-legend-value">${money(totalServiceCharge)}</span>
+</div>`;
+
+  paymentNoteEl.innerHTML = `Figures assume all payments are made on schedule with no prepayment. Paying more than your Total Estimated Monthly Payment reduces your outstanding balance faster — which lowers your total interest, Finance Charge, and Total of Payments.`;
 }
 
 const priceEl = document.getElementById('price');
@@ -234,6 +311,31 @@ const lotsEl = document.getElementById('lots');
 const blockEl = document.getElementById('block');
 const countyEl = document.getElementById('county');
 const summaryEl = document.getElementById('summary');
+const chartMetaEl = document.getElementById('chartMeta');
+const paymentBarEl = document.getElementById('paymentBar');
+const paymentLegendEl = document.getElementById('paymentLegend');
+const paymentNoteEl = document.getElementById('paymentNote');
+
+// Auto-populate and calculate from Power Apps URL parameters
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    let hasData = false;
+    
+    if (urlParams.has('tract')) { tractNameEl.value = urlParams.get('tract'); hasData = true; }
+    if (urlParams.has('county')) { countyEl.value = urlParams.get('county'); hasData = true; }
+    if (urlParams.has('block')) { blockEl.value = urlParams.get('block'); hasData = true; }
+    if (urlParams.has('lots')) { lotsEl.value = urlParams.get('lots'); hasData = true; }
+    if (urlParams.has('price')) { priceEl.value = urlParams.get('price'); hasData = true; }
+    if (urlParams.has('dp')) { downEl.value = urlParams.get('dp'); hasData = true; }
+    if (urlParams.has('rate')) { rateEl.value = urlParams.get('rate'); hasData = true; }
+    if (urlParams.has('term')) { yearsEl.value = urlParams.get('term'); hasData = true; }
+
+    // Automatically calculate if parameters came through
+    if (hasData) {
+        calc();
+    }
+});
 </script>
 </body>
 </html>
