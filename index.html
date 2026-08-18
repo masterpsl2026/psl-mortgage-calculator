@@ -320,20 +320,17 @@ const paymentNoteEl = document.getElementById('paymentNote');
 window.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     
-    let hasData = false;
-    
-    if (urlParams.has('tract')) { tractNameEl.value = urlParams.get('tract'); hasData = true; }
-    if (urlParams.has('county')) { countyEl.value = urlParams.get('county'); hasData = true; }
-    if (urlParams.has('block')) { blockEl.value = urlParams.get('block'); hasData = true; }
-    if (urlParams.has('lots')) { lotsEl.value = urlParams.get('lots'); hasData = true; }
-    if (urlParams.has('price')) { priceEl.value = urlParams.get('price'); hasData = true; }
-    if (urlParams.has('dp')) { downEl.value = urlParams.get('dp'); hasData = true; }
-    if (urlParams.has('rate')) { rateEl.value = urlParams.get('rate'); hasData = true; }
-    if (urlParams.has('term')) { yearsEl.value = urlParams.get('term'); hasData = true; }
+    if (urlParams.has('tract')) tractNameEl.value = urlParams.get('tract');
+    if (urlParams.has('block')) blockEl.value = urlParams.get('block');
+    if (urlParams.has('lots')) lotsEl.value = urlParams.get('lots');
+    if (urlParams.has('price')) priceEl.value = urlParams.get('price');
+    if (urlParams.has('dp')) downEl.value = urlParams.get('dp');
 
-    // Automatically calculate if parameters came through
-    if (hasData) {
+    // Automatically calculate if price is passed
+    if (urlParams.has('price')) {
         calc();
+    }
+});
     }
 });
 </script>
